@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Chatアプリ</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+</head>
+
+<body>
+  <!--/ ブラウザの画面に見える内容 -->
+  <div class="panel-default">
+    <div class="panel-heading">
+        <p>chat</p>
+    </div>
+    <div id="scroller" class="panel-body">
+        <ul id='message'><!--保存されたデータの表示場所-->
+        </ul>
+    </div>
+    <div class="panel-footer">
+        <input type='text' class="form-control" id="nameInput" placeholder="ユーザー名を入力してください">
+    </div>
+    <div class="panel-footer">
+        <input type='text' class="form-control" id="messageInput" placeholder="メッセージ内容を入力してください">
+    </div>
+</div>
+
+  <div>
+    <!-- 送信ボタン -->
+    <button id="send">送信</button>
+  </div>
+  <style>
+  ul,li{
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+    text-align: left;
+}
+#scroller {
+    height: 500px;
+    overflow: auto;
+}
+
+/*******************************
+* 左からの吹き出し
+********************************/
+.left_balloon {
+    position: relative;
+    background: #f1f0f0;
+    border: 0px solid #777;
+    margin: 5px 10px;
+    padding: 5px 10px;
+    border-radius: 15px;
+    width: 400px;
+    clear: both;
+}
+
+/*******************************
+* 右からの吹き出し
+********************************/
+.right_balloon {
+    color: #fff;
+    position: relative;
+    background: #0084ff;
+    border: 0px solid #777;
+    margin: 5px 10px;
+    padding: 5px 10px;
+    border-radius: 15px;
+    width: 400px;
+    clear: both;
+    float: right;
+}
+
+/*******************************
+* 割り込みを解除
+********************************/
+.clear_balloon{
+  clear: both;
+}
+
+
+.sender_name{
+    margin-bottom: -5px;
+    padding-left: 20px;
+    color: rgba(0, 0, 0, .40);
+}
+.sender_name.me{
+    float: right;
+    padding: 0 20px 0 0;
+}
+
+  </style>
+
+
+<!-- chat.js -->
+  <script src="chat.js"></script>
+  <!-- JQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+  <!--** 以下Firebase **-->
+  <!-- The core Firebase JS SDK is always required and must be listed first -->
+  <!-- ここにfirebaseのscriptを貼り付ける appはずす-->
+  <script src="https://www.gstatic.com/firebasejs/8.1.1/firebase.js"></script>
+
+  <script>
+    // Your web app's Firebase configuration
+    var firebaseConfig = {
+      apiKey: "AIzaSyAMmD2wms5nzEd2lCQTF-k9kRkBHlgSrYY",
+    authDomain: "dev18-chat-86287.firebaseapp.com",
+    databaseURL: "https://dev18-chat-86287.firebaseio.com",
+    projectId: "dev18-chat-86287",
+    storageBucket: "dev18-chat-86287.appspot.com",
+    messagingSenderId: "18356139036",
+    appId: "1:18356139036:web:8a6b7acfe12d63bd71dbd9"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+
+    //firebaseのデーターベース（保存させる場所）を使いますよと言うjsのコードを貼り付ける
+    // xxxxxスクリプトを貼り付ける
+    const messagesRef = firebase.database().ref();
+    const messageField = $('#messageInput');
+    const nameField = $('#nameInput');
+    const messageList = $('#messages');
+
+
+
+    // ここから下にjqueryの処理を書いて練習します
+    // 送信ボタンをクリックされたら次の処理をする
+    $("#send").on("click", function () {
+    
+      // データを登録で送る
+      messagesRef.push({
+        //名前
+        username:$("#nameField").val(),
+        //テキストエリア
+        message:$("#messageField").val()
+      })
+      // 文字を空にする
+      $("#message").val(""); //空にする
+      $("#username").val(""); //空にする
+
+       messagesRef.push({name:username, text:message});
+       messageField.val('');
+
+        $('#scroller').scrollTop($('#messages').height());
+   
+    });
+
+    // 受信処理 うまくいかなくなりました。途中で提出してすみません。
+  
+    messagesRef.on("child_added", function (data) {
+      let v=data.val();//ここに保存されたデータが全て入ってくる
+      let k=data.key;// function (data)のdataにfirebaseのデータが入ってくる
+
+     // let k = data.key; //今回は使いません
+     
+      //console.logで受信=firebaseに登録されている中身を確認しよう！
+
+      //テンプレートリテラル `` を活用して変数にhtmlを埋め込もう！ //${v,text} ,にするとdetaの要素がでてくる
+      let str = `<p>${v.nameInput}<br>${v.messageInput}</p>`;
+      // ここでデータをhtmlに埋め込む prependには変数を埋め込もう！
+      $("#message").prepend(str);
+   // });
+
+    $("#messageInput").on("keydown", function (e) {
+
+      // eventの中身をconsole.logでみてみよう！
+      console.log(e,"押されたよ")//違う操作のとき
+    })
+
+// データベースにデータが追加されたときに発動
+messagesRef.limitToLast(10).on('child_added', function (snapshot) {
+    //取得したデータ
+    const data = snapshot.val();
+    const username = data.name || "anonymous";
+    const message = data.text;
+
+    //取得したデータの名前が自分の名前なら右側に吹き出しを出す
+    if ( username == nameField.val() ) {
+
+        var messageElement = $("<il><p class='sender_name me'>" + username + "</p><p class='right_balloon'>" + message + "</p><p class='clear_balloon'></p></il>");
+
+    } else {
+
+        var messageElement = $("<il><p class='sender_name'>" + username + "</p><p class='left_balloon'>" + message + "</p><p class='clear_balloon'></p></il>");
+
+    }
+    //HTMLに取得したデータを追加する
+    messageList.append(messageElement)
+
+    //一番下にスクロールする
+    messageList[0].scrollTop = messageList[0].scrollHeight;
+});
+
+  </script>
+</body>
+
+</html>
